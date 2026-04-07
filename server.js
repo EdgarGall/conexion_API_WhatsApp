@@ -6,12 +6,10 @@ import "dotenv/config";
 const app = express();
 app.use(express.json());
 
-const {WEBHOOK_VERIFY_TOKEN, API_TOKEN, BUSINESS_PHONE_ID, API_VERSION, PORT} = process.env;
+const {WEBHOOK_VERIFY_TOKEN, API_TOKEN, BUSINESS_PHONE, API_VERSION, PORT} = process.env;
 
 app.post("/webhook", async (req, res) => {
     console.log("WEBHOOK mensaje no encontrado: ", JSON.stringify(req.body, null, 2));
-
-    const mensaje = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
 
     if (mensaje?.type === "text") {
 
@@ -19,7 +17,7 @@ app.post("/webhook", async (req, res) => {
 
         await axios({
             method: "POST",
-            url: `https://graph.facebook.com/${API_VERSION}/${BUSINESS_PHONE_ID}/messages`,
+            url: `https://graph.facebook.com/${API_VERSION}/${BUSINESS_PHONE}/messages`,
             headers: {
                 Authorization: `Bearer ${API_TOKEN}`,	
             },
@@ -35,7 +33,7 @@ app.post("/webhook", async (req, res) => {
 
         await axios({
             method: "POST",
-            url: `https://graph.facebook.com/${API_VERSION}/${BUSINESS_PHONE_ID}/messages`,
+            url: `https://graph.facebook.com/${API_VERSION}/${BUSINESS_PHONE}/messages`,
             headers: {
                 Authorization: `Bearer ${API_TOKEN}`,	
             },
