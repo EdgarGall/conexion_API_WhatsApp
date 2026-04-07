@@ -1,6 +1,79 @@
-improt 
+import express, { text } from 'express';
+import axios from 'axios';
+import "dotenv/config";
 
 
+const app = express();
+app.use(express.json());
+
+const {WEBHOOK_VERIFY_TOKEN, API_TOKEN, BUSINESS_PHONE_ID, API_VERSION, PORT} = process.env;
+
+app.post("/webhook", async (req, res) => {
+    console.log("WEBHOOK mensaje no encontrado: ", JSON.stringify(req.body, null, 2));
+
+    const mensaje = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+
+    if (mensaje?.type === "text") {
+
+        const BUSINESS_PHONE_ID = req.body.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id;
+
+        await axios({
+            method: "POST",
+            url: `https://graph.facebook.com/${API_VERSION}/${BUSINESS_PHONE_ID}/messages`,
+            headers: {
+                Authorization: `Bearer ${API_TOKEN}`,	
+            },
+            data: {
+                messaging_product: "whatsapp",
+                to: mensaje.from,
+                text: { body: `Eco: ${mensaje.text.body}` },
+                context: {
+                    message_id: mensaje.id
+                },
+            },
+        });
+
+        await axios({
+            method: "POST",
+            url: `https://graph.facebook.com/${API_VERSION}/${BUSINESS_PHONE_ID}/messages`,
+            headers: {
+                Authorization: `Bearer ${API_TOKEN}`,	
+            },
+            data: {
+                messaging_product: "whatsapp",
+                status: "read",
+                message_id: mensaje.id,
+            },
+        });
+    }
+
+    res.sendStatus(200);
+});
+
+
+app.get("/webhook", (req, res) => {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+
+    if (mode === "subscribe" && token === WEBHOOK_VERIFY_TOKEN) {
+
+        res.status(200).send(challenge);
+        console.log("WEBHOOK_VERIFIED");
+
+    }else{
+        res.sendStatus(403);
+    }
+});
+
+app.get("/", (req, res) => {
+    res.send("<pre>Servidor de WhatsApp Business API funcionando correctamente,</pre>");
+});
+
+app.listen(PORT, () => {
+    console.log(`Servidor escuchando en puerto ${PORT}`);
+
+});
 
 /*const express = require('express');
 const axios = require('axios');
